@@ -767,6 +767,11 @@
                 <h2 class="section-title">Performance Metrics</h2>
                 <div id="progressMetrics"></div>
 
+                <!-- Custom Stats -->
+                <h2 class="section-title">Custom Tracking</h2>
+                <div id="customStats"></div>
+                <button class="button mt-2" onclick="addCustomStat()" style="background: var(--surface-2);">+ Add Custom Stat</button>
+
                 <!-- Update Stats Button -->
                 <button class="button mt-3" onclick="openStatsModal()">Update Stats</button>
             </div>
@@ -820,6 +825,10 @@
                     <input type="number" class="input-field" id="weightInput" placeholder="245">
                 </div>
                 <div class="input-group">
+                    <label class="input-label">Weight Goal (lbs)</label>
+                    <input type="number" class="input-field" id="weightGoalInput" placeholder="220">
+                </div>
+                <div class="input-group">
                     <label class="input-label">Waist (inches)</label>
                     <input type="number" class="input-field" id="waistInput" placeholder="40">
                 </div>
@@ -840,6 +849,30 @@
                     <input type="text" class="input-field" id="plankInput" placeholder="1:00">
                 </div>
                 <button class="button" onclick="saveStats()">Save Stats</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="customStatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Custom Stat</h3>
+                <button class="modal-close" onclick="closeModal('customStatModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">Stat Name</label>
+                    <input type="text" class="input-field" id="customStatName" placeholder="e.g. Body Fat %, Bench Press">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Current Value</label>
+                    <input type="text" class="input-field" id="customStatValue" placeholder="e.g. 25%, 135 lbs">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Goal (optional)</label>
+                    <input type="text" class="input-field" id="customStatGoal" placeholder="e.g. 15%, 225 lbs">
+                </div>
+                <button class="button" onclick="saveCustomStat()">Add Stat</button>
             </div>
         </div>
     </div>
@@ -870,6 +903,15 @@
                     plankTime: '1:00',
                     waist: 0
                 },
+                goals: {
+                    weight: 220,
+                    pullupMax: 15,
+                    pushupMax: 50,
+                    mileTime: '8:00',
+                    plankTime: '3:00',
+                    waist: -4
+                },
+                customStats: {},
                 achievements: {},
                 weeklyWorkouts: 0,
                 workoutTimes: {}, // Track workout completion times
@@ -1665,6 +1707,10 @@
             document.getElementById('totalXPValue').textContent = state.userData.xp;
             
             const metricsContainer = document.getElementById('progressMetrics');
+            const weightGoal = state.userData.goals.weight;
+            const weightProgress = ((state.userData.stats.weight - weightGoal) / (245 - weightGoal)) * 100;
+            const weightToGo = state.userData.stats.weight - weightGoal;
+            
             metricsContainer.innerHTML = `
                 <div class="phase-indicator">
                     <div class="phase-title">CURRENT TRAINING PHASE</div>
@@ -1677,10 +1723,10 @@
                         <span class="progress-value">${state.userData.stats.weight} lbs</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${((245 - state.userData.stats.weight) / 25) * 100}%"></div>
+                        <div class="progress-fill" style="width: ${Math.max(0, 100 - weightProgress)}%"></div>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: 220 lbs • ${25 - (245 - state.userData.stats.weight)} lbs to go
+                        Goal: ${weightGoal} lbs • ${weightToGo > 0 ? weightToGo + ' lbs to go' : 'Goal reached! 🎉'}
                     </div>
                 </div>
                 
@@ -1690,7 +1736,7 @@
                         <span class="progress-value">${state.userData.stats.waist || '--'} inches</span>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: -4 inches from start
+                        Goal: ${state.userData.goals.waist} inches from start
                     </div>
                 </div>
                 
@@ -1700,10 +1746,10 @@
                         <span class="progress-value">${state.userData.stats.pullupMax}</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(state.userData.stats.pullupMax / 15) * 100}%"></div>
+                        <div class="progress-fill" style="width: ${(state.userData.stats.pullupMax / state.userData.goals.pullupMax) * 100}%"></div>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: 15 reps • ${15 - state.userData.stats.pullupMax} to go
+                        Goal: ${state.userData.goals.pullupMax} reps • ${Math.max(0, state.userData.goals.pullupMax - state.userData.stats.pullupMax)} to go
                     </div>
                 </div>
                 
@@ -1713,10 +1759,10 @@
                         <span class="progress-value">${state.userData.stats.pushupMax}</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(state.userData.stats.pushupMax / 50) * 100}%"></div>
+                        <div class="progress-fill" style="width: ${(state.userData.stats.pushupMax / state.userData.goals.pushupMax) * 100}%"></div>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: 50 reps • ${50 - state.userData.stats.pushupMax} to go
+                        Goal: ${state.userData.goals.pushupMax} reps • ${Math.max(0, state.userData.goals.pushupMax - state.userData.stats.pushupMax)} to go
                     </div>
                 </div>
                 
@@ -1726,7 +1772,7 @@
                         <span class="progress-value">${state.userData.stats.mileTime}</span>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: Sub-8 minutes
+                        Goal: ${state.userData.goals.mileTime}
                     </div>
                 </div>
                 
@@ -1736,21 +1782,236 @@
                         <span class="progress-value">${state.userData.stats.plankTime}</span>
                     </div>
                     <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        Goal: 3 minutes
+                        Goal: ${state.userData.goals.plankTime}
                     </div>
                 </div>
             `;
+            
+            // Update custom stats
+            updateCustomStats();
         }
 
-        // Get Phase Data
-        function getPhaseData() {
-            const phase = state.userData.currentPhase;
-            const phases = {
-                1: { name: "Athletic Foundation", description: "Building base fitness" },
-                2: { name: "Athletic Power", description: "Increasing intensity" },
-                3: { name: "Elite Conditioning", description: "Peak performance" }
+        // Update Custom Stats
+        function updateCustomStats() {
+            const container = document.getElementById('customStats');
+            const customStats = state.userData.customStats;
+            
+            if (Object.keys(customStats).length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No custom stats yet. Add your own!</p>';
+                return;
+            }
+            
+            container.innerHTML = Object.entries(customStats).map(([key, stat]) => `
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">${stat.name}</span>
+                        <span class="progress-value">${stat.value}</span>
+                    </div>
+                    ${stat.goal ? `
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                            Goal: ${stat.goal}
+                        </div>
+                    ` : ''}
+                    <button onclick="editCustomStat('${key}')" style="margin-top: 8px; background: var(--surface-2); border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; color: var(--text-primary); cursor: pointer;">
+                        Edit
+                    </button>
+                    <button onclick="deleteCustomStat('${key}')" style="margin-left: 8px; background: var(--danger); border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; color: white; cursor: pointer;">
+                        Delete
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Add Custom Stat
+        function addCustomStat() {
+            document.getElementById('customStatName').value = '';
+            document.getElementById('customStatValue').value = '';
+            document.getElementById('customStatGoal').value = '';
+            openModal('customStatModal');
+        }
+
+        // Save Custom Stat
+        function saveCustomStat() {
+            const name = document.getElementById('customStatName').value.trim();
+            const value = document.getElementById('customStatValue').value.trim();
+            const goal = document.getElementById('customStatGoal').value.trim();
+            
+            if (!name || !value) {
+                alert('Please enter a name and current value');
+                return;
+            }
+            
+            const key = name.toLowerCase().replace(/\s+/g, '_');
+            state.userData.customStats[key] = {
+                name: name,
+                value: value,
+                goal: goal || null
             };
-            return phases[phase] || phases[1];
+            
+            saveState();
+            updateUI();
+            closeModal('customStatModal');
+        }
+
+        // Edit Custom Stat
+        function editCustomStat(key) {
+            const stat = state.userData.customStats[key];
+            if (!stat) return;
+            
+            document.getElementById('customStatName').value = stat.name;
+            document.getElementById('customStatValue').value = stat.value;
+            document.getElementById('customStatGoal').value = stat.goal || '';
+            openModal('customStatModal');
+        }
+
+        // Delete Custom Stat
+        function deleteCustomStat(key) {
+            if (confirm('Delete this custom stat?')) {
+                delete state.userData.customStats[key];
+                saveState();
+                updateUI();
+            }
+        }
+
+        // Get current workout based on day and phase
+        function getCurrentWorkout(dayOfWeek) {
+            const phase = state.userData.currentPhase;
+            const baseWorkout = workouts[dayOfWeek];
+            
+            // Phase 1: Use base workouts as-is
+            if (phase === 1) {
+                return baseWorkout;
+            }
+            
+            // Phase 2: Increase intensity
+            if (phase === 2) {
+                return enhanceWorkoutPhase2(baseWorkout);
+            }
+            
+            // Phase 3: Elite level
+            if (phase === 3) {
+                return enhanceWorkoutPhase3(baseWorkout, dayOfWeek);
+            }
+            
+            return baseWorkout;
+        }
+        
+        // Phase 2 enhancements
+        function enhanceWorkoutPhase2(workout) {
+            const enhanced = JSON.parse(JSON.stringify(workout)); // Deep copy
+            
+            // Add 1 set to all exercises and reduce rest by 15 seconds
+            enhanced.exercises = enhanced.exercises.map(exercise => {
+                let newSets = exercise.sets;
+                let newRest = exercise.rest;
+                
+                // Add extra set
+                if (exercise.sets.includes('x')) {
+                    const parts = exercise.sets.split('x');
+                    if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
+                        const sets = parseInt(parts[0]) + 1;
+                        newSets = `${sets} x ${parts[1].trim()}`;
+                    }
+                }
+                
+                // Reduce rest time
+                if (exercise.rest.includes('s between')) {
+                    const restTime = parseInt(exercise.rest);
+                    if (!isNaN(restTime)) {
+                        const newTime = Math.max(restTime - 15, 45);
+                        newRest = `${newTime}s between sets`;
+                    }
+                }
+                
+                return { ...exercise, sets: newSets, rest: newRest };
+            });
+            
+            // Update specific exercises for Phase 2
+            enhanced.exercises = enhanced.exercises.map(exercise => {
+                // Increase sprint distance
+                if (exercise.name === "Sprint Intervals") {
+                    return { ...exercise, sets: "8 x 60m", description: "Longer sprints" };
+                }
+                // Add progression notes
+                if (exercise.name === "Pull-ups" || exercise.name === "Push-ups") {
+                    return { ...exercise, rest: exercise.rest + " (add weight if possible)" };
+                }
+                return exercise;
+            });
+            
+            // Increase XP rewards
+            enhanced.xp = Math.floor(workout.xp * 1.2);
+            
+            return enhanced;
+        }
+        
+        // Phase 3 enhancements
+        function enhanceWorkoutPhase3(workout, dayOfWeek) {
+            const enhanced = JSON.parse(JSON.stringify(workout)); // Deep copy
+            
+            // Add Wednesday skills day
+            if (dayOfWeek === 3) {
+                return {
+                    name: "Skills & Movement Day",
+                    description: "Advanced movement practice",
+                    xp: 70,
+                    warmup: [
+                        { name: "Joint Mobility", sets: "10 minutes", rest: "Full body" },
+                        { name: "Handstand Prep", sets: "5 minutes", rest: "Wrist work" }
+                    ],
+                    exercises: [
+                        { name: "Handstand Practice", sets: "20 minutes", rest: "Work on progression" },
+                        { name: "L-Sit Progression", sets: "15 minutes", rest: "Build to 30s hold" },
+                        { name: "Pistol Squat Practice", sets: "10 minutes each leg", rest: "Use assistance as needed" },
+                        { name: "Muscle-up Progression", sets: "15 minutes", rest: "High pulls or negatives" },
+                        { name: "Movement Flow", sets: "15 minutes", rest: "Creative combinations" }
+                    ],
+                    finisher: [
+                        { name: "Flexibility Work", sets: "10 minutes", rest: "Full body" }
+                    ]
+                };
+            }
+            
+            // Further enhance all workouts
+            enhanced.exercises = enhanced.exercises.map(exercise => {
+                let newSets = exercise.sets;
+                let newRest = exercise.rest;
+                
+                // Add 2 sets from base (total +2 from Phase 1)
+                if (exercise.sets.includes('x')) {
+                    const parts = exercise.sets.split('x');
+                    if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
+                        const sets = parseInt(parts[0]) + 2;
+                        newSets = `${sets} x ${parts[1].trim()}`;
+                    }
+                }
+                
+                // Minimal rest periods
+                if (exercise.rest.includes('s between')) {
+                    const restTime = parseInt(exercise.rest);
+                    if (!isNaN(restTime)) {
+                        const newTime = Math.max(restTime - 30, 30);
+                        newRest = `${newTime}s between sets`;
+                    }
+                }
+                
+                return { ...exercise, sets: newSets, rest: newRest };
+            });
+            
+            // Add double session note for certain days
+            if (dayOfWeek === 1 || dayOfWeek === 4) {
+                enhanced.description += " + Evening 20min cardio";
+                enhanced.finisher.push({
+                    name: "Evening Session", 
+                    sets: "20 min easy cardio", 
+                    rest: "Separate session"
+                });
+            }
+            
+            // Elite XP rewards
+            enhanced.xp = Math.floor(workout.xp * 1.5);
+            
+            return enhanced;
         }
 
         // Update Achievements Tab
@@ -1775,7 +2036,7 @@
             if (state.userData.completedToday) return;
             
             const today = new Date();
-            const workout = workouts[today.getDay()];
+            const workout = getCurrentWorkout(today.getDay());
             
             // Add haptic feedback
             if ('vibrate' in navigator) {
@@ -1935,6 +2196,7 @@
         function openStatsModal() {
             // Pre-fill current values
             document.getElementById('weightInput').value = state.userData.stats.weight;
+            document.getElementById('weightGoalInput').value = state.userData.goals.weight;
             document.getElementById('waistInput').value = state.userData.stats.waist || '';
             document.getElementById('pullupInput').value = state.userData.stats.pullupMax;
             document.getElementById('pushupInput').value = state.userData.stats.pushupMax;
@@ -1946,6 +2208,7 @@
 
         function saveStats() {
             state.userData.stats.weight = parseInt(document.getElementById('weightInput').value) || state.userData.stats.weight;
+            state.userData.goals.weight = parseInt(document.getElementById('weightGoalInput').value) || state.userData.goals.weight;
             state.userData.stats.waist = parseInt(document.getElementById('waistInput').value) || state.userData.stats.waist;
             state.userData.stats.pullupMax = parseInt(document.getElementById('pullupInput').value) || state.userData.stats.pullupMax;
             state.userData.stats.pushupMax = parseInt(document.getElementById('pushupInput').value) || state.userData.stats.pushupMax;

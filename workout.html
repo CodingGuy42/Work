@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Athlete</title>
+    <style>
+        :root {
+            --primary: #007AFF;
+            --success: #34C759;
+            --warning: #FF9500;
+            --danger: #FF3B30;
+            --background: #000000;
+            --surface: #1C1C1E;
+            --surface-2: #2C2C2E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8E8E93;
+            --text-tertiary: #48484A;
+            --separator: #38383A;
+            --safe-area-inset-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            max-width: 428px;
+            margin: 0 auto;
+            background: var(--background);
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            padding: 60px 20px 20px;
+            background: var(--background);
+            z-index: 10;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-title {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-stats {
+            text-align: right;
+        }
+
+        .xp-display {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .level-display {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 20px 100px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .tab-content.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .tab-content.prev {
+            transform: translateX(-100%);
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid var(--separator);
+            z-index: 100;
+        }
+
+        .tab-bar-inner {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 var(--safe-area-inset-bottom);
+            max-width: 428px;
+            margin: 0 auto;
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            color: var(--primary);
+        }
+
+        .tab-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .tab-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* Cards and Components */
+        .card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+            background: var(--surface-2);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 24px 0 16px;
+            letter-spacing: -0.3px;
+        }
+
+        /* Today's Workout Card */
+        .workout-hero {
+            background: linear-gradient(135deg, var(--primary), #0051D5);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workout-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .workout-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .workout-date {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .workout-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .workout-description {
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .complete-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .complete-button:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .complete-button.completed {
+            background: rgba(52, 199, 89, 0.3);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Progress Section */
+        .progress-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .progress-value {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--surface-2);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        /* Achievements */
+        .achievement {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            gap: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .achievement.unlocked {
+            background: var(--surface-2);
+        }
+
+        .achievement-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--surface-2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .achievement.unlocked .achievement-icon {
+            background: var(--primary);
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .achievement-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Exercise List */
+        .exercise-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 0.5px solid var(--separator);
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .exercise-item:active {
+            opacity: 0.6;
+        }
+
+        .exercise-item:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-info {
+            flex: 1;
+        }
+
+        .exercise-name {
+            font-size: 17px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .exercise-details {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .exercise-chevron {
+            color: var(--text-tertiary);
+            font-size: 16px;
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 428px;
+            margin: 0 auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 0.5px solid var(--separator);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            background: var(--surface-2);
+            border: none;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* Input Fields */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--surface-2);
+            border: none;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 17px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        /* Buttons */
+        .button {
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .button:active {
+            opacity: 0.8;
+        }
+
+        .button-secondary {
+            background: var(--surface-2);
+            color: var(--text-primary);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+        }
+
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--surface-2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Boss Battle Card */
+        .boss-battle-card {
+            background: linear-gradient(135deg, var(--danger), #FF6B6B);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .boss-battle-card::before {
+            content: '⚔️';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 60px;
+            opacity: 0.2;
+        }
+
+        .boss-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .boss-description {
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+
+        .boss-reward {
+            background: rgba(255, 255, 255, 0.2);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Side Quest Card */
+        .side-quest {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .side-quest:active {
+            transform: scale(0.98);
+            background: var(--surface-2);
+        }
+
+        .side-quest.completed {
+            opacity: 0.6;
+        }
+
+        .side-quest-info {
+            flex: 1;
+        }
+
+        .side-quest-name {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .side-quest-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .side-quest-xp {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .side-quest.completed .side-quest-xp {
+            background: var(--success);
+        }
+
+        /* Phase Indicator */
+        .phase-indicator {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .phase-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .phase-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Utility Classes */
+        .mt-1 { margin-top: 8px; }
+        .mt-2 { margin-top: 16px; }
+        .mt-3 { margin-top: 24px; }
+        .mb-1 { margin-bottom: 8px; }
+        .mb-2 { margin-bottom: 16px; }
+        .mb-3 { margin-bottom: 24px; }
+
+        /* Haptic Feedback (visual) */
+        @keyframes haptic {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+        }
+
+        .haptic {
+            animation: haptic 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title" id="headerTitle">Today</h1>
+                <div class="header-stats">
+                    <div class="xp-display" id="xpDisplay">0 XP</div>
+                    <div class="level-display" id="levelDisplay">Beginner</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Today Tab -->
+            <div class="tab-content active" id="todayTab">
+                <!-- Today's Workout Hero -->
+                <div class="workout-hero" id="workoutHero">
+                    <div class="workout-hero-content">
+                        <div class="workout-date" id="workoutDate"></div>
+                        <h2 class="workout-name" id="workoutName"></h2>
+                        <p class="workout-description" id="workoutDescription"></p>
+                        <button class="complete-button" id="completeButton" onclick="completeWorkout()">
+                            <span id="completeButtonText">Complete Workout</span>
+                            <span id="completeButtonIcon">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="streakValue">0</div>
+                        <div class="stat-label">Day Streak 🔥</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="weekValue">1</div>
+                        <div class="stat-label">Week <span id="phaseLabel" style="color: var(--primary); font-size: 11px;">(Phase 1)</span></div>
+                    </div>
+                </div>
+
+                <!-- Daily Side Quests -->
+                <h2 class="section-title">Daily Side Quests</h2>
+                <div id="sideQuestsContainer"></div>
+
+                <!-- Boss Battle (if applicable) -->
+                <div id="bossBattleContainer"></div>
+
+                <!-- Today's Exercises -->
+                <h2 class="section-title">Today's Exercises</h2>
+                <div class="card" id="exerciseList"></div>
+
+                <!-- Weekly Schedule -->
+                <h2 class="section-title">This Week</h2>
+                <div id="weeklySchedule"></div>
+            </div>
+
+            <!-- Progress Tab -->
+            <div class="tab-content" id="progressTab">
+                <h2 class="section-title">Your Progress</h2>
+                
+                <!-- Stats Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalWorkoutsValue">0</div>
+                        <div class="stat-label">Total Workouts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalXPValue">0</div>
+                        <div class="stat-label">Total XP</div>
+                    </div>
+                </div>
+
+                <!-- Progress Metrics -->
+                <h2 class="section-title">Performance Metrics</h2>
+                <div id="progressMetrics"></div>
+
+                <!-- Update Stats Button -->
+                <button class="button mt-3" onclick="openStatsModal()">Update Stats</button>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div class="tab-content" id="achievementsTab">
+                <h2 class="section-title">Achievements</h2>
+                <div id="achievementsList"></div>
+            </div>
+        </main>
+
+        <!-- Tab Bar -->
+        <nav class="tab-bar">
+            <div class="tab-bar-inner">
+                <button class="tab-item active" onclick="switchTab('today')">
+                    <span class="tab-icon">💪</span>
+                    <span class="tab-label">Today</span>
+                </button>
+                <button class="tab-item" onclick="switchTab('progress')">
+                    <span class="tab-icon">📊</span>
+                    <span class="tab-label">Progress</span>
+                </button>
+                <button class="tab-item" onclick="switchTab('achievements')">
+                    <span class="tab-icon">🏆</span>
+                    <span class="tab-label">Achievements</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="exerciseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exerciseModalTitle"></h3>
+                <button class="modal-close" onclick="closeModal('exerciseModal')">×</button>
+            </div>
+            <div class="modal-body" id="exerciseModalBody"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Update Stats</h3>
+                <button class="modal-close" onclick="closeModal('statsModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">Current Weight (lbs)</label>
+                    <input type="number" class="input-field" id="weightInput" placeholder="245">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Waist (inches)</label>
+                    <input type="number" class="input-field" id="waistInput" placeholder="40">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Pull-up Max</label>
+                    <input type="number" class="input-field" id="pullupInput" placeholder="5">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Push-up Max</label>
+                    <input type="number" class="input-field" id="pushupInput" placeholder="10">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Mile Time</label>
+                    <input type="text" class="input-field" id="mileInput" placeholder="10:00">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Plank Time</label>
+                    <input type="text" class="input-field" id="plankInput" placeholder="1:00">
+                </div>
+                <button class="button" onclick="saveStats()">Save Stats</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentTab: 'today',
+            userData: {
+                xp: 0,
+                level: 1,
+                totalWorkouts: 0,
+                currentWeek: 1,
+                currentPhase: 1, // 1-3 for the 12-week program
+                streak: 0,
+                lastWorkoutDate: null,
+                completedToday: false,
+                completedSideQuests: {
+                    morning: false,
+                    afternoon: false,
+                    evening: false
+                },
+                stats: {
+                    weight: 245,
+                    pullupMax: 5,
+                    pushupMax: 10,
+                    mileTime: '10:00',
+                    plankTime: '1:00',
+                    waist: 0
+                },
+                achievements: {},
+                weeklyWorkouts: 0,
+                workoutTimes: {}, // Track workout completion times
+                personalRecords: {
+                    fastestWarrior: null,
+                    mostPullups: 5,
+                    mostPushups: 10,
+                    longest100Squats: null
+                }
+            }
+        };
+
+        // Workout Data - Shifted 2 days forward (Monday's workout now on Wednesday)
+        const workouts = {
+            0: {
+                name: "Endurance Day",
+                description: "Cardio and recovery work",
+                xp: 40,
+                warmup: [
+                    { name: "Easy Movement", sets: "5 minutes", rest: "Light pace" },
+                    { name: "Dynamic Stretching", sets: "5 minutes", rest: "Full body" }
+                ],
+                exercises: [
+                    { name: "Run/Walk", sets: "30-40 minutes", rest: "Conversational pace" },
+                    { name: "OR Jump Rope", sets: "30 minutes", rest: "Mixed pace" },
+                    { name: "OR Bike", sets: "45 minutes", rest: "Steady pace" }
+                ],
+                finisher: [
+                    { name: "Core Work", sets: "100 reps choice", rest: "As needed" },
+                    { name: "Full Body Stretch", sets: "15 minutes", rest: "Hold stretches" },
+                    { name: "Foam Rolling", sets: "Optional", rest: "Problem areas" }
+                ]
+            },
+            1: {
+                name: "Active Recovery",
+                description: "Light movement and mobility work",
+                xp: 20,
+                warmup: [
+                    { name: "Gentle Walk", sets: "5 minutes", rest: "Easy pace" }
+                ],
+                exercises: [
+                    { name: "Easy Walk", sets: "30 minutes", rest: "Conversational pace" },
+                    { name: "Full Body Stretching", sets: "15 minutes", rest: "Focus on tight areas" },
+                    { name: "Yoga Flow", sets: "Optional", rest: "Gentle pace" }
+                ],
+                cooldown: [
+                    { name: "Meditation", sets: "5-10 minutes", rest: "Optional" }
+                ]
+            },
+            2: {
+                name: "Rest Day",
+                description: "Recovery and stretching",
+                xp: 20,
+                warmup: [
+                    { name: "Gentle Movement", sets: "5 minutes", rest: "Easy pace" }
+                ],
+                exercises: [
+                    { name: "Full Body Stretching", sets: "20 minutes", rest: "Hold 30-60s each" },
+                    { name: "Foam Rolling", sets: "Optional", rest: "Problem areas" }
+                ],
+                cooldown: [
+                    { name: "Deep Breathing", sets: "5 minutes", rest: "Relaxation" }
+                ]
+            },
+            3: {
+                name: "Lower Body Power",
+                description: "Sprint work and explosive leg training",
+                xp: 50,
+                warmup: [
+                    { name: "Jump Rope", sets: "3 minutes", rest: "Easy pace" },
+                    { name: "Leg Swings", sets: "10 each direction", rest: "Dynamic" },
+                    { name: "Lunges with Twist", sets: "10 each side", rest: "Dynamic" },
+                    { name: "High Knees", sets: "30 seconds", rest: "Moderate pace" },
+                    { name: "Butt Kicks", sets: "30 seconds", rest: "Moderate pace" },
+                    { name: "Sprint Build-ups", sets: "3 x 20m", rest: "Walk back" }
+                ],
+                exercises: [
+                    { name: "Sprint Intervals", sets: "6 x 40m", rest: "Walk back recovery" },
+                    { name: "Jump Squats", sets: "3 x 15", rest: "90s between sets" },
+                    { name: "Bulgarian Split Squats", sets: "3 x 12 each", rest: "90s between sets" },
+                    { name: "Broad Jumps", sets: "3 x 8", rest: "90s between sets" },
+                    { name: "Single Leg Calf Raises", sets: "3 x 15 each", rest: "60s between sets" },
+                    { name: "Wall Sit", sets: "3 x 45s", rest: "90s between sets" }
+                ],
+                finisher: [
+                    { name: "100 Bodyweight Squats", sets: "For time", rest: "Record time" }
+                ]
+            },
+            4: {
+                name: "Upper Push + Core",
+                description: "Push-up variations and core destruction",
+                xp: 50,
+                warmup: [
+                    { name: "Arm Circles", sets: "20 each direction", rest: "Dynamic" },
+                    { name: "Push-up Progression", sets: "5, 4, 3, 2, 1 reps", rest: "Light" },
+                    { name: "Shoulder Rolls", sets: "10 forward, 10 back", rest: "Dynamic" }
+                ],
+                exercises: [
+                    { name: "Wide-Grip Push-ups", sets: "5 x 8", rest: "90s between sets" },
+                    { name: "Regular Push-ups", sets: "5 x 10", rest: "90s between sets" },
+                    { name: "Diamond Push-ups", sets: "5 x 5", rest: "90s between sets" },
+                    { name: "Pike Push-ups", sets: "5 x 8", rest: "90s between sets" },
+                    { name: "Plank", sets: "4 x 45s", rest: "15s between" },
+                    { name: "Mountain Climbers", sets: "4 x 45s", rest: "15s between" },
+                    { name: "Russian Twists", sets: "4 x 45s", rest: "15s between" },
+                    { name: "Leg Raises", sets: "4 x 45s", rest: "15s between" },
+                    { name: "Hollow Body Hold", sets: "4 x 45s", rest: "15s between" },
+                    { name: "Dips (use chairs)", sets: "3 x max", rest: "60s between" },
+                    { name: "Overhead Press (water jugs)", sets: "3 x 15", rest: "60s between" },
+                    { name: "Close-Grip Push-ups", sets: "3 x 12", rest: "60s between" }
+                ],
+                finisher: []
+            },
+            5: {
+                name: "Pull + Conditioning",
+                description: "Back work and metabolic finisher",
+                xp: 50,
+                warmup: [
+                    { name: "Jump Rope", sets: "2 minutes", rest: "Moderate pace" },
+                    { name: "Arm Swings", sets: "20 each", rest: "Dynamic" },
+                    { name: "Scapular Pull-ups", sets: "10 reps", rest: "Activation" }
+                ],
+                exercises: [
+                    { name: "Pull-ups", sets: "5 x Max", rest: "2-3 min between" },
+                    { name: "Negative Pull-ups", sets: "After max, to 8 total", rest: "Controlled" },
+                    { name: "Australian Pull-ups", sets: "3 x 15", rest: "60s between" },
+                    { name: "Reverse Plank", sets: "3 x 30s", rest: "60s between" },
+                    { name: "Towel Curls", sets: "3 x 12 each arm", rest: "60s between" },
+                    { name: "Superman Holds", sets: "3 x 15", rest: "60s between" }
+                ],
+                finisher: [
+                    { name: "EMOM Burpees", sets: "Even min: 15 burpees", rest: "10 minutes total" },
+                    { name: "EMOM Jump Rope", sets: "Odd min: 60 singles", rest: "Alternating" }
+                ]
+            },
+            6: {
+                name: "Warrior Circuit",
+                description: "Full body circuit for time",
+                xp: 60,
+                warmup: [
+                    { name: "Mixed Movement", sets: "5 minutes", rest: "Full body" },
+                    { name: "Dynamic Stretching", sets: "5 minutes", rest: "All major muscles" }
+                ],
+                exercises: [
+                    { name: "Pull-ups", sets: "5 rounds x 5", rest: "2 min between rounds" },
+                    { name: "Push-ups", sets: "5 rounds x 15", rest: "Circuit format" },
+                    { name: "Squats", sets: "5 rounds x 25", rest: "Circuit format" },
+                    { name: "Dips", sets: "5 rounds x 10", rest: "Circuit format" },
+                    { name: "Lunges", sets: "5 rounds x 20 total", rest: "Circuit format" },
+                    { name: "Plank", sets: "5 rounds x 60s", rest: "Circuit format" }
+                ],
+                finisher: [
+                    { name: "Record Total Time", sets: "Goal: Under 35 min", rest: "Track progress" }
+                ]
+            }
+        };
+
+        // Exercise Instructions
+        const exerciseInstructions = {
+            // Warm-up Exercises
+            "Jump Rope": {
+                description: "Classic cardio warm-up",
+                steps: "1. Hold handles at hip height\n2. Turn rope with wrists, not arms\n3. Jump on balls of feet\n4. Keep jumps low to ground",
+                tips: "• Start slow and build speed\n• Land softly\n• Keep core engaged"
+            },
+            "Leg Swings": {
+                description: "Dynamic hip mobility",
+                steps: "1. Hold wall/pole for balance\n2. Swing leg forward and back\n3. Keep leg straight but relaxed\n4. Control the movement",
+                tips: "• Don't force range of motion\n• Keep standing leg slightly bent\n• Do both front-back and side-to-side"
+            },
+            "Lunges with Twist": {
+                description: "Dynamic warm-up for legs and core",
+                steps: "1. Step forward into lunge\n2. Twist torso toward front leg\n3. Return to center\n4. Step back and switch legs",
+                tips: "• Keep front knee over ankle\n• Twist from core, not just arms\n• Maintain upright posture"
+            },
+            "High Knees": {
+                description: "Running in place with high knee lift",
+                steps: "1. Run in place\n2. Bring knees to hip level\n3. Pump arms actively\n4. Land on balls of feet",
+                tips: "• Keep core tight\n• Quick foot contacts\n• Drive knees up forcefully"
+            },
+            "Butt Kicks": {
+                description: "Dynamic hamstring warm-up",
+                steps: "1. Run in place\n2. Kick heels toward glutes\n3. Keep knees pointing down\n4. Quick, light steps",
+                tips: "• Stay on balls of feet\n• Keep upper body tall\n• Quick tempo"
+            },
+            "Sprint Build-ups": {
+                description: "Progressive speed increases",
+                steps: "1. Start at easy jog\n2. Gradually increase speed\n3. Reach 90% effort by end\n4. Walk back to recover",
+                tips: "• Smooth acceleration\n• Focus on form\n• Don't go 100% in warm-up"
+            },
+            "Arm Circles": {
+                description: "Shoulder mobility warm-up",
+                steps: "1. Arms out to sides\n2. Make small circles forward\n3. Gradually increase size\n4. Reverse direction",
+                tips: "• Keep shoulders down\n• Control the movement\n• Both directions equally"
+            },
+            "Scapular Pull-ups": {
+                description: "Back activation exercise",
+                steps: "1. Hang from bar\n2. Pull shoulder blades down and back\n3. Lift body slightly without bending arms\n4. Release and repeat",
+                tips: "• Small movement\n• Feel lats engage\n• Great pull-up prep"
+            },
+            
+            // Lower Body Exercises
+            "Sprint Intervals": {
+                description: "High-intensity sprint training",
+                steps: "1. Warm up thoroughly\n2. Sprint 40m at 90% effort\n3. Walk back slowly\n4. Repeat for sets",
+                tips: "• Focus on explosive starts\n• Maintain good form\n• Full recovery between sprints"
+            },
+            "Jump Squats": {
+                description: "Explosive lower body power",
+                steps: "1. Feet shoulder-width apart\n2. Lower into squat\n3. Explode up, jumping high\n4. Land softly and repeat",
+                tips: "• Land with soft knees\n• Keep chest up\n• Use arms for momentum"
+            },
+            "Bulgarian Split Squats": {
+                description: "Single leg strength builder",
+                steps: "1. Rear foot on elevated surface\n2. Lower front knee to 90 degrees\n3. Push through front heel\n4. Complete reps, then switch",
+                tips: "• Keep front knee behind toes\n• Don't let back knee touch ground\n• Stay upright"
+            },
+            "Broad Jumps": {
+                description: "Horizontal power development",
+                steps: "1. Stand with feet hip-width\n2. Swing arms back, bend knees\n3. Jump forward explosively\n4. Stick the landing",
+                tips: "• Full arm swing\n• Focus on distance\n• Land in athletic position"
+            },
+            "Single Leg Calf Raises": {
+                description: "Calf strength and balance",
+                steps: "1. Stand on one foot\n2. Rise up on ball of foot\n3. Pause at top\n4. Lower slowly",
+                tips: "• Full range of motion\n• Hold wall for balance if needed\n• Control the descent"
+            },
+            "Wall Sit": {
+                description: "Isometric leg endurance",
+                steps: "1. Back against wall\n2. Slide down to 90 degrees\n3. Thighs parallel to ground\n4. Hold position",
+                tips: "• Keep back flat\n• Weight in heels\n• Breathe normally"
+            },
+            "100 Bodyweight Squats": {
+                description: "Leg endurance finisher",
+                steps: "1. Feet shoulder-width apart\n2. Lower to parallel\n3. Drive through heels\n4. Repeat for 100 total",
+                tips: "• Maintain form throughout\n• Break into sets if needed\n• Time yourself"
+            },
+            
+            // Upper Body Push Exercises
+            "Wide-Grip Push-ups": {
+                description: "Chest-focused push-up variation",
+                steps: "1. Hands wider than shoulders\n2. Lower chest to ground\n3. Push up to start\n4. Keep core tight",
+                tips: "• Elbows at 45-degree angle\n• Full range of motion\n• Modify on knees if needed"
+            },
+            "Regular Push-ups": {
+                description: "Classic upper body exercise",
+                steps: "1. Hands shoulder-width apart\n2. Lower body as one unit\n3. Chest to ground\n4. Push back up",
+                tips: "• Straight line from head to heels\n• Controlled tempo\n• Breathe in down, out up"
+            },
+            "Diamond Push-ups": {
+                description: "Tricep-focused push-up",
+                steps: "1. Make diamond with hands\n2. Place under chest\n3. Lower with elbows close\n4. Push up powerfully",
+                tips: "• Very challenging\n• Keep elbows tucked\n• Drop to knees if needed"
+            },
+            "Pike Push-ups": {
+                description: "Shoulder-focused push-up",
+                steps: "1. Downward dog position\n2. Walk feet closer to hands\n3. Lower head toward ground\n4. Push back to start",
+                tips: "• Hips stay high\n• Works shoulders hard\n• Look at feet"
+            },
+            "Close-Grip Push-ups": {
+                description: "Tricep emphasis push-up",
+                steps: "1. Hands close together\n2. Elbows track close to body\n3. Lower with control\n4. Push up strongly",
+                tips: "• Elbows brush ribs\n• Harder than regular\n• Great tricep builder"
+            },
+            "Push-up Progression": {
+                description: "Warm-up push-up ladder",
+                steps: "1. Do 5 push-ups\n2. Brief rest\n3. Do 4, then 3, 2, 1\n4. Decreasing ladder",
+                tips: "• Light warm-up pace\n• Focus on form\n• Prep for workout"
+            },
+            
+            // Core Exercises
+            "Plank": {
+                description: "Core stability hold",
+                steps: "1. Forearms on ground\n2. Body in straight line\n3. Hold position\n4. Breathe normally",
+                tips: "• Don't let hips sag\n• Squeeze glutes\n• Look at ground"
+            },
+            "Mountain Climbers": {
+                description: "Dynamic core and cardio",
+                steps: "1. Start in plank position\n2. Drive knee to chest\n3. Quickly switch legs\n4. Keep switching",
+                tips: "• Keep hips level\n• Quick tempo\n• Core stays tight"
+            },
+            "Russian Twists": {
+                description: "Oblique strengthener",
+                steps: "1. Sit, lean back 45 degrees\n2. Feet up, knees bent\n3. Rotate side to side\n4. Touch ground each side",
+                tips: "• Control the movement\n• Keep chest up\n• Add weight when ready"
+            },
+            "Leg Raises": {
+                description: "Lower ab exercise",
+                steps: "1. Lie on back\n2. Legs straight up\n3. Lower slowly\n4. Stop before ground",
+                tips: "• Press lower back down\n• Control descent\n• Don't swing"
+            },
+            "Hollow Body Hold": {
+                description: "Total core stability",
+                steps: "1. Lie on back\n2. Press lower back down\n3. Lift shoulders and legs\n4. Hold position",
+                tips: "• No gap under back\n• Point toes\n• Arms by ears"
+            },
+            
+            // Pull Exercises
+            "Pull-ups": {
+                description: "The king of back exercises",
+                steps: "1. Hang from bar\n2. Pull chin over bar\n3. Lower with control\n4. Full arm extension",
+                tips: "• No kipping\n• Use bands if needed\n• Squeeze shoulder blades"
+            },
+            "Negative Pull-ups": {
+                description: "Eccentric pull-up training",
+                steps: "1. Jump or step to top position\n2. Chin over bar\n3. Lower as slowly as possible\n4. Reset and repeat",
+                tips: "• 3-5 second descent\n• Builds pull-up strength\n• Control is key"
+            },
+            "Australian Pull-ups": {
+                description: "Horizontal pulling exercise",
+                steps: "1. Lie under table/bar\n2. Pull chest to surface\n3. Lower with control\n4. Keep body straight",
+                tips: "• Easier than pull-ups\n• Adjust angle for difficulty\n• Great progression"
+            },
+            "Reverse Plank": {
+                description: "Posterior chain hold",
+                steps: "1. Sit, hands behind hips\n2. Lift hips up high\n3. Body in straight line\n4. Hold position",
+                tips: "• Squeeze glutes\n• Look slightly up\n• Don't let hips drop"
+            },
+            "Towel Curls": {
+                description: "Creative bicep exercise",
+                steps: "1. Loop towel under foot\n2. Hold ends with hand\n3. Curl against resistance\n4. Use leg to create tension",
+                tips: "• Control the resistance\n• Full range of motion\n• Creative solution"
+            },
+            "Superman Holds": {
+                description: "Lower back strengthener",
+                steps: "1. Lie face down\n2. Lift chest and legs\n3. Arms extended forward\n4. Hold briefly, lower",
+                tips: "• Don't overarch\n• Squeeze glutes\n• Brief holds"
+            },
+            
+            // Full Body Exercises
+            "Burpees": {
+                description: "Full body conditioning",
+                steps: "1. Stand tall\n2. Drop to plank\n3. Do push-up\n4. Jump feet to hands\n5. Jump up with arms overhead",
+                tips: "• Smooth transitions\n• Modify by stepping\n• Focus on form first"
+            },
+            "EMOM Burpees": {
+                description: "Every Minute on the Minute",
+                steps: "1. Start timer\n2. Do 15 burpees\n3. Rest remainder of minute\n4. Repeat at next minute",
+                tips: "• Pace yourself\n• Consistent speed\n• 10 rounds total"
+            },
+            "EMOM Jump Rope": {
+                description: "Cardio intervals",
+                steps: "1. Do 60 single jumps\n2. Rest remainder of minute\n3. Alternates with burpees\n4. Stay ready",
+                tips: "• Quick transitions\n• Stay warm between\n• Maintain rhythm"
+            },
+            "Squats": {
+                description: "Fundamental leg exercise",
+                steps: "1. Feet shoulder-width\n2. Lower hips back and down\n3. Thighs parallel\n4. Drive through heels up",
+                tips: "• Keep chest up\n• Knees track toes\n• Full depth"
+            },
+            "Lunges": {
+                description: "Single leg strength",
+                steps: "1. Step forward\n2. Lower back knee\n3. Both knees 90 degrees\n4. Push back to start",
+                tips: "• Keep torso upright\n• Don't rush\n• Alternate legs"
+            },
+            "Dips": {
+                description: "Tricep and chest builder",
+                steps: "1. Support on two surfaces\n2. Lower body down\n3. Elbows to 90 degrees\n4. Push back up",
+                tips: "• Lean slightly forward\n• Control descent\n• Use feet to assist"
+            },
+            "Overhead Press (water jugs)": {
+                description: "Shoulder strengthener",
+                steps: "1. Hold jugs at shoulders\n2. Press overhead\n3. Full arm extension\n4. Lower with control",
+                tips: "• Keep core tight\n• Don't arch back\n• Use gallon jugs"
+            },
+            
+            // Cardio/Recovery
+            "Run/Walk": {
+                description: "Steady state cardio",
+                steps: "1. Start with easy pace\n2. Run at conversational pace\n3. Walk if needed\n4. Maintain for duration",
+                tips: "• Don't go too hard\n• Should be able to talk\n• Build endurance"
+            },
+            "Easy Walk": {
+                description: "Active recovery",
+                steps: "1. Comfortable pace\n2. Relaxed breathing\n3. Swing arms naturally\n4. Enjoy the movement",
+                tips: "• Recovery pace\n• Get blood flowing\n• Mental break too"
+            },
+            "Full Body Stretching": {
+                description: "Flexibility routine",
+                steps: "1. Start with major muscles\n2. Hold each 30-60 seconds\n3. Breathe deeply\n4. Don't force it",
+                tips: "• Never painful\n• Gradual progress\n• Both sides equally"
+            },
+            "Core Work": {
+                description: "Choose your ab exercises",
+                steps: "1. Pick favorite core moves\n2. Do 100 total reps\n3. Mix different exercises\n4. Quality over speed",
+                tips: "• Variety is good\n• Focus on form\n• Break into sets"
+            },
+            "Foam Rolling": {
+                description: "Self-myofascial release",
+                steps: "1. Roll slowly on tight areas\n2. Pause on tender spots\n3. Breathe through it\n4. Don't rush",
+                tips: "• Not too much pressure\n• 30-60 seconds per area\n• Helps recovery"
+            },
+            "Dynamic Stretching": {
+                description: "Movement-based flexibility",
+                steps: "1. Active movements\n2. Through full range\n3. Control the motion\n4. Multiple directions",
+                tips: "• Not static holds\n• Prepares for workout\n• Smooth movements"
+            },
+            "Record Total Time": {
+                description: "Track your circuit time",
+                steps: "1. Start timer at first rep\n2. Complete all 5 rounds\n3. Stop timer at finish\n4. Record for progress",
+                tips: "• Beat previous time\n• Under 35 min is elite\n• Consistency over speed"
+            }
+        };
+
+        // Boss Battles (Weekly Challenges)
+        const bossBattles = {
+            1: { name: "Sprint King", description: "Complete 10 x 40m sprints", xp: 150 },
+            2: { name: "Push-up Destroyer", description: "200 push-ups in one session", xp: 150 },
+            3: { name: "Core Crusher", description: "5 minute plank hold", xp: 150 },
+            4: { name: "Pull-up Master", description: "50 total pull-ups", xp: 150 },
+            5: { name: "1000 Rep Challenge", description: "200 each: pull-ups, push-ups, dips, squats, lunges", xp: 200 },
+            6: { name: "Speed Demon", description: "Complete Warrior Circuit under 35 min", xp: 200 },
+            7: { name: "Burpee King", description: "150 burpees for time", xp: 200 },
+            8: { name: "Endurance Test", description: "45 min non-stop workout", xp: 200 },
+            9: { name: "Elite Challenge", description: "1000 reps total (mix)", xp: 250 },
+            10: { name: "Sub-7 Mile", description: "Run 1 mile under 7 minutes", xp: 250 },
+            11: { name: "Burpee Hell", description: "300 burpees for time", xp: 300 },
+            12: { name: "Final Boss", description: "Complete Phase 1 workout in half time", xp: 500 }
+        };
+
+        // Side Quests
+        const sideQuests = {
+            morning: { name: "Morning Beast", description: "50 burpees under 5 minutes", xp: 10 },
+            afternoon: { name: "Jump Rope Master", description: "1000 jump rope contacts", xp: 15 },
+            evening: { name: "Push-up Century", description: "100 push-ups any style", xp: 20 }
+        };
+
+        // Achievements Data (Updated)
+        const achievements = [
+            { id: 'firstStep', name: 'First Steps', description: 'Complete your first workout', icon: '🏃' },
+            { id: 'weekWarrior', name: 'Week Warrior', description: 'Complete a perfect week (5/5)', icon: '📅' },
+            { id: 'pullupPrince', name: 'Pull-up Prince', description: 'Hit 10 consecutive pull-ups', icon: '💪' },
+            { id: 'speedDemon', name: 'Speed Demon', description: 'Complete workout 20% faster', icon: '⚡' },
+            { id: 'consistency', name: 'Consistency King', description: '20 workouts without missing', icon: '👑' },
+            { id: 'enduranceEngine', name: 'Endurance Engine', description: '200 burpees in one session', icon: '🔥' },
+            { id: 'bossSlayer', name: 'Boss Slayer', description: 'Complete 5 boss battles', icon: '⚔️' },
+            { id: 'phaseComplete', name: 'Phase Master', description: 'Complete a full phase', icon: '🎯' },
+            { id: 'transformer', name: 'Transformer', description: 'Lose 10 pounds', icon: '🔄' },
+            { id: 'legendStatus', name: 'Legend Status', description: 'Reach 3000 XP', icon: '🏆' }
+        ];
+
+        // Initialize App
+        function init() {
+            loadState();
+            updateUI();
+            setupEventListeners();
+        }
+
+        // Load saved state
+        function loadState() {
+            const saved = localStorage.getItem('athleteApp');
+            if (saved) {
+                state.userData = JSON.parse(saved);
+                checkNewDay();
+            }
+        }
+
+        // Save state
+        function saveState() {
+            localStorage.setItem('athleteApp', JSON.stringify(state.userData));
+        }
+
+        // Check if it's a new day
+        function checkNewDay() {
+            const today = new Date().toDateString();
+            if (state.userData.lastWorkoutDate !== today) {
+                state.userData.completedToday = false;
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            updateHeader();
+            updateTodayTab();
+            updateProgressTab();
+            updateAchievementsTab();
+        }
+
+        // Update Header
+        function updateHeader() {
+            const levelThresholds = [0, 500, 1200, 2000, 3000];
+            const currentThreshold = levelThresholds[state.userData.level - 1];
+            const nextThreshold = levelThresholds[state.userData.level] || 9999;
+            const levelProgress = state.userData.xp - currentThreshold;
+            const levelTotal = nextThreshold - currentThreshold;
+            
+            document.getElementById('xpDisplay').textContent = `${state.userData.xp} XP`;
+            document.getElementById('levelDisplay').textContent = `${getLevelName()} • ${Math.floor((levelProgress / levelTotal) * 100)}%`;
+        }
+
+        // Get Level Name
+        function getLevelName() {
+            const levels = ['Beginner', 'Athlete', 'Warrior', 'Elite', 'Legend'];
+            const thresholds = [0, 500, 1200, 2000, 3000];
+            
+            for (let i = thresholds.length - 1; i >= 0; i--) {
+                if (state.userData.xp >= thresholds[i]) {
+                    state.userData.level = i + 1;
+                    return levels[i];
+                }
+            }
+            return levels[0];
+        }
+
+        // Update Today Tab
+        function updateTodayTab() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const workout = workouts[dayOfWeek];
+            
+            // Update phase
+            const phase = Math.ceil(state.userData.currentWeek / 4);
+            state.userData.currentPhase = phase;
+            document.getElementById('phaseLabel').textContent = `(Phase ${phase})`;
+            
+            // Update date
+            document.getElementById('workoutDate').textContent = today.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Update workout info
+            document.getElementById('workoutName').textContent = workout.name;
+            document.getElementById('workoutDescription').textContent = workout.description;
+            
+            // Update complete button
+            const completeButton = document.getElementById('completeButton');
+            const buttonText = document.getElementById('completeButtonText');
+            const buttonIcon = document.getElementById('completeButtonIcon');
+            
+            if (state.userData.completedToday) {
+                completeButton.classList.add('completed');
+                buttonText.textContent = 'Completed';
+                buttonIcon.textContent = '✓';
+            } else {
+                completeButton.classList.remove('completed');
+                buttonText.textContent = 'Complete Workout';
+                buttonIcon.textContent = '→';
+            }
+            
+            // Update quick stats
+            document.getElementById('streakValue').textContent = state.userData.streak;
+            document.getElementById('weekValue').textContent = state.userData.currentWeek;
+            
+            // Update side quests
+            updateSideQuests();
+            
+            // Update boss battle (if it's the week for one)
+            updateBossBattle();
+            
+            // Update exercise list
+            updateExerciseList(workout);
+            
+            // Update weekly schedule
+            updateWeeklySchedule();
+        }
+
+        // Update Side Quests
+        function updateSideQuests() {
+            const container = document.getElementById('sideQuestsContainer');
+            const today = new Date().toDateString();
+            
+            // Reset side quests if it's a new day
+            if (state.userData.lastWorkoutDate !== today) {
+                state.userData.completedSideQuests = {
+                    morning: false,
+                    afternoon: false,
+                    evening: false
+                };
+            }
+            
+            container.innerHTML = Object.entries(sideQuests).map(([key, quest]) => {
+                const isCompleted = state.userData.completedSideQuests[key];
+                return `
+                    <div class="side-quest ${isCompleted ? 'completed' : ''}" onclick="completeSideQuest('${key}')">
+                        <div class="side-quest-info">
+                            <div class="side-quest-name">${quest.name}</div>
+                            <div class="side-quest-description">${quest.description}</div>
+                        </div>
+                        <div class="side-quest-xp">${isCompleted ? '✓' : `+${quest.xp} XP`}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update Boss Battle
+        function updateBossBattle() {
+            const container = document.getElementById('bossBattleContainer');
+            const currentWeek = state.userData.currentWeek;
+            const bossBattle = bossBattles[currentWeek];
+            
+            if (bossBattle) {
+                container.innerHTML = `
+                    <h2 class="section-title">⚔️ Weekly Boss Battle</h2>
+                    <div class="boss-battle-card">
+                        <div class="boss-title">${bossBattle.name}</div>
+                        <div class="boss-description">${bossBattle.description}</div>
+                        <div class="boss-reward">+${bossBattle.xp} XP</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        // Complete Side Quest
+        function completeSideQuest(questKey) {
+            if (state.userData.completedSideQuests[questKey]) return;
+            
+            const quest = sideQuests[questKey];
+            state.userData.xp += quest.xp;
+            state.userData.completedSideQuests[questKey] = true;
+            
+            // Haptic feedback
+            if ('vibrate' in navigator) {
+                navigator.vibrate(30);
+            }
+            
+            saveState();
+            updateUI();
+        }
+
+        // Update Exercise List
+        function updateExerciseList(workout) {
+            const container = document.getElementById('exerciseList');
+            let html = '';
+            
+            // Add warmup section if exists
+            if (workout.warmup && workout.warmup.length > 0) {
+                html += '<h4 style="color: var(--warning); font-size: 14px; margin: 16px 0 12px;">🔥 WARM-UP</h4>';
+                html += workout.warmup.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Add main workout section
+            html += '<h4 style="color: var(--primary); font-size: 14px; margin: 16px 0 12px;">💪 MAIN WORKOUT</h4>';
+            html += workout.exercises.map(exercise => `
+                <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                    <div class="exercise-info">
+                        <div class="exercise-name">${exercise.name}</div>
+                        <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                    </div>
+                    <span class="exercise-chevron">›</span>
+                </div>
+            `).join('');
+            
+            // Add finisher/cooldown section if exists
+            if (workout.finisher && workout.finisher.length > 0) {
+                html += '<h4 style="color: var(--danger); font-size: 14px; margin: 16px 0 12px;">🏁 FINISHER</h4>';
+                html += workout.finisher.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (workout.cooldown && workout.cooldown.length > 0) {
+                html += '<h4 style="color: var(--success); font-size: 14px; margin: 16px 0 12px;">🧘 COOL DOWN</h4>';
+                html += workout.cooldown.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Update Weekly Schedule
+        function updateWeeklySchedule() {
+            const container = document.getElementById('weeklySchedule');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const today = new Date().getDay();
+            
+            container.innerHTML = days.map((day, index) => {
+                const workout = workouts[index];
+                const isToday = index === today;
+                const isCompleted = isToday && state.userData.completedToday;
+                
+                return `
+                    <div class="card ${isToday ? 'workout-hero' : ''}" 
+                         style="${isToday ? 'background: var(--surface-2);' : ''} cursor: pointer;"
+                         onclick="showWorkoutDetails(${index})">
+                        <div class="workout-hero-content">
+                            <div class="workout-date">${day} ${isToday ? '(Today)' : ''}</div>
+                            <h3 class="workout-name" style="font-size: 20px;">${workout.name}</h3>
+                            <p class="workout-description" style="font-size: 14px;">${workout.description}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                                <span style="color: var(--primary); font-weight: 600;">+${workout.xp} XP</span>
+                                ${isCompleted ? '<span style="color: var(--success);">✓ Done</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show Workout Details (New Function)
+        function showWorkoutDetails(dayIndex) {
+            const workout = workouts[dayIndex];
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            
+            document.getElementById('exerciseModalTitle').textContent = `${days[dayIndex]} - ${workout.name}`;
+            
+            let html = `<div class="mb-3"><p style="color: var(--text-secondary); margin-bottom: 16px;">${workout.description}</p></div>`;
+            
+            // Add warmup section if exists
+            if (workout.warmup && workout.warmup.length > 0) {
+                html += '<h4 style="color: var(--warning); font-size: 13px; margin-bottom: 12px;">🔥 WARM-UP</h4>';
+                html += workout.warmup.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Main workout
+            html += '<h4 style="color: var(--primary); font-size: 13px; margin: 16px 0 12px;">💪 MAIN WORKOUT</h4>';
+            html += workout.exercises.map(exercise => `
+                <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                    <div class="exercise-info">
+                        <div class="exercise-name">${exercise.name}</div>
+                        <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                    </div>
+                    <span class="exercise-chevron">›</span>
+                </div>
+            `).join('');
+            
+            // Add finisher if exists
+            if (workout.finisher && workout.finisher.length > 0) {
+                html += '<h4 style="color: var(--danger); font-size: 13px; margin: 16px 0 12px;">🏁 FINISHER</h4>';
+                html += workout.finisher.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Add cooldown if exists
+            if (workout.cooldown && workout.cooldown.length > 0) {
+                html += '<h4 style="color: var(--success); font-size: 13px; margin: 16px 0 12px;">🧘 COOL DOWN</h4>';
+                html += workout.cooldown.map(exercise => `
+                    <div class="exercise-item" onclick="showExerciseDetails('${exercise.name}')">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-details">${exercise.sets} • ${exercise.rest}</div>
+                        </div>
+                        <span class="exercise-chevron">›</span>
+                    </div>
+                `).join('');
+            }
+            
+            html += `
+                <div style="margin-top: 24px; padding: 16px; background: var(--surface-2); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600;">Total XP</span>
+                        <span style="color: var(--primary); font-weight: 600;">+${workout.xp} XP</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('exerciseModalBody').innerHTML = html;
+            openModal('exerciseModal');
+        }
+
+        // Update Progress Tab
+        function updateProgressTab() {
+            document.getElementById('totalWorkoutsValue').textContent = state.userData.totalWorkouts;
+            document.getElementById('totalXPValue').textContent = state.userData.xp;
+            
+            const metricsContainer = document.getElementById('progressMetrics');
+            metricsContainer.innerHTML = `
+                <div class="phase-indicator">
+                    <div class="phase-title">CURRENT TRAINING PHASE</div>
+                    <div class="phase-name">${getPhaseData().name}</div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Weight</span>
+                        <span class="progress-value">${state.userData.stats.weight} lbs</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${((245 - state.userData.stats.weight) / 25) * 100}%"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: 220 lbs • ${25 - (245 - state.userData.stats.weight)} lbs to go
+                    </div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Waist</span>
+                        <span class="progress-value">${state.userData.stats.waist || '--'} inches</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: -4 inches from start
+                    </div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Pull-ups</span>
+                        <span class="progress-value">${state.userData.stats.pullupMax}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(state.userData.stats.pullupMax / 15) * 100}%"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: 15 reps • ${15 - state.userData.stats.pullupMax} to go
+                    </div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Push-ups</span>
+                        <span class="progress-value">${state.userData.stats.pushupMax}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(state.userData.stats.pushupMax / 50) * 100}%"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: 50 reps • ${50 - state.userData.stats.pushupMax} to go
+                    </div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Mile Time</span>
+                        <span class="progress-value">${state.userData.stats.mileTime}</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: Sub-8 minutes
+                    </div>
+                </div>
+                
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title">Plank Hold</span>
+                        <span class="progress-value">${state.userData.stats.plankTime}</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Goal: 3 minutes
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get Phase Data
+        function getPhaseData() {
+            const phase = state.userData.currentPhase;
+            const phases = {
+                1: { name: "Athletic Foundation", description: "Building base fitness" },
+                2: { name: "Athletic Power", description: "Increasing intensity" },
+                3: { name: "Elite Conditioning", description: "Peak performance" }
+            };
+            return phases[phase] || phases[1];
+        }
+
+        // Update Achievements Tab
+        function updateAchievementsTab() {
+            const container = document.getElementById('achievementsList');
+            container.innerHTML = achievements.map(achievement => {
+                const isUnlocked = state.userData.achievements[achievement.id];
+                return `
+                    <div class="achievement ${isUnlocked ? 'unlocked' : ''}">
+                        <div class="achievement-icon">${achievement.icon}</div>
+                        <div class="achievement-info">
+                            <div class="achievement-title">${achievement.name}</div>
+                            <div class="achievement-description">${achievement.description}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Complete Workout
+        function completeWorkout() {
+            if (state.userData.completedToday) return;
+            
+            const today = new Date();
+            const workout = workouts[today.getDay()];
+            
+            // Add haptic feedback
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+            
+            // Update stats
+            state.userData.xp += workout.xp;
+            state.userData.totalWorkouts++;
+            state.userData.completedToday = true;
+            state.userData.lastWorkoutDate = today.toDateString();
+            state.userData.weeklyWorkouts++;
+            
+            // Update streak
+            updateStreak();
+            
+            // Check achievements
+            checkAchievements();
+            
+            // Update week
+            if (state.userData.totalWorkouts % 7 === 0) {
+                state.userData.currentWeek++;
+            }
+            
+            // Save and update UI
+            saveState();
+            updateUI();
+            
+            // Show success animation
+            showSuccessAnimation();
+        }
+
+        // Update Streak
+        function updateStreak() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (state.userData.lastWorkoutDate === yesterday.toDateString() || state.userData.streak === 0) {
+                state.userData.streak++;
+            }
+        }
+
+        // Check Achievements
+        function checkAchievements() {
+            // First workout
+            if (state.userData.totalWorkouts === 1) {
+                state.userData.achievements.firstStep = true;
+            }
+            
+            // Perfect week
+            if (state.userData.weeklyWorkouts === 5) {
+                state.userData.achievements.weekWarrior = true;
+                state.userData.weeklyWorkouts = 0;
+            }
+            
+            // Pull-up milestone
+            if (state.userData.stats.pullupMax >= 10) {
+                state.userData.achievements.pullupPrince = true;
+            }
+            
+            // Consistency
+            if (state.userData.totalWorkouts === 20) {
+                state.userData.achievements.consistency = true;
+            }
+            
+            // Weight loss
+            if (245 - state.userData.stats.weight >= 10) {
+                state.userData.achievements.transformer = true;
+            }
+            
+            // Phase completion
+            if (state.userData.currentWeek % 4 === 0 && state.userData.currentWeek > 0) {
+                state.userData.achievements.phaseComplete = true;
+            }
+            
+            // Legend status
+            if (state.userData.xp >= 3000) {
+                state.userData.achievements.legendStatus = true;
+            }
+        }
+
+        // Show Success Animation
+        function showSuccessAnimation() {
+            const button = document.getElementById('completeButton');
+            button.classList.add('haptic');
+            
+            setTimeout(() => {
+                button.classList.remove('haptic');
+            }, 200);
+        }
+
+        // Switch Tab
+        function switchTab(tabName) {
+            // Update active states
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                content.classList.add('prev');
+            });
+            
+            // Set new active tab
+            const tabIndex = tabName === 'today' ? 0 : tabName === 'progress' ? 1 : 2;
+            document.querySelectorAll('.tab-item')[tabIndex].classList.add('active');
+            
+            const newContent = document.getElementById(`${tabName}Tab`);
+            newContent.classList.remove('prev');
+            newContent.classList.add('active');
+            
+            // Update header
+            const titles = { today: 'Today', progress: 'Progress', achievements: 'Achievements' };
+            document.getElementById('headerTitle').textContent = titles[tabName];
+            
+            state.currentTab = tabName;
+        }
+
+        // Show Exercise Details
+        function showExerciseDetails(exerciseName) {
+            const exercise = exerciseInstructions[exerciseName];
+            if (!exercise) return;
+            
+            document.getElementById('exerciseModalTitle').textContent = exerciseName;
+            document.getElementById('exerciseModalBody').innerHTML = `
+                <div class="mb-3">
+                    <h4 style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">DESCRIPTION</h4>
+                    <p>${exercise.description}</p>
+                </div>
+                <div class="mb-3">
+                    <h4 style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">HOW TO</h4>
+                    <p style="white-space: pre-line;">${exercise.steps}</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">TIPS</h4>
+                    <p style="white-space: pre-line;">${exercise.tips}</p>
+                </div>
+            `;
+            
+            openModal('exerciseModal');
+        }
+
+        // Modal Functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function openStatsModal() {
+            // Pre-fill current values
+            document.getElementById('weightInput').value = state.userData.stats.weight;
+            document.getElementById('waistInput').value = state.userData.stats.waist || '';
+            document.getElementById('pullupInput').value = state.userData.stats.pullupMax;
+            document.getElementById('pushupInput').value = state.userData.stats.pushupMax;
+            document.getElementById('mileInput').value = state.userData.stats.mileTime;
+            document.getElementById('plankInput').value = state.userData.stats.plankTime;
+            
+            openModal('statsModal');
+        }
+
+        function saveStats() {
+            state.userData.stats.weight = parseInt(document.getElementById('weightInput').value) || state.userData.stats.weight;
+            state.userData.stats.waist = parseInt(document.getElementById('waistInput').value) || state.userData.stats.waist;
+            state.userData.stats.pullupMax = parseInt(document.getElementById('pullupInput').value) || state.userData.stats.pullupMax;
+            state.userData.stats.pushupMax = parseInt(document.getElementById('pushupInput').value) || state.userData.stats.pushupMax;
+            state.userData.stats.mileTime = document.getElementById('mileInput').value || state.userData.stats.mileTime;
+            state.userData.stats.plankTime = document.getElementById('plankInput').value || state.userData.stats.plankTime;
+            
+            checkAchievements();
+            saveState();
+            updateUI();
+            closeModal('statsModal');
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Close modals on background click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            });
+
+            // Week reset check
+            setInterval(() => {
+                const dayOfWeek = new Date().getDay();
+                if (dayOfWeek === 1 && state.userData.weeklyWorkouts > 0) {
+                    state.userData.weeklyWorkouts = 0;
+                    saveState();
+                }
+            }, 3600000); // Check every hour
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
